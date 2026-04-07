@@ -204,7 +204,12 @@ class IdronautD4(Idronaut):
             if len(df) < 10:
                 self.log.info("File too short, skipping.".format(file), 2)
                 return False
-            df.columns = ['Press', 'Temp', 'Cond', 'Cond20', 'OPTO%', 'OPTOppm', 'pH', 'eH', 'Chl2', 'Chl', 'PhycoEr', 'PhycoCy', 'ACQ.', 'DATE', '&', 'TIME']
+            if len(df.columns) == 16:
+                df.columns = ['Press', 'Temp', 'Cond', 'Cond20', 'OPTO%', 'OPTOppm', 'pH', 'eH', 'Chl2', 'Chl', 'PhycoEr', 'PhycoCy', 'ACQ.', 'DATE', '&', 'TIME']
+            elif len(df.columns) == 17:
+                df.columns = ['Press', 'Temp', 'Cond', 'Cond20', 'OPTO%', 'OPTOppm', 'pH', 'eH', 'Chl2', 'Turb', 'Chl', 'PhycoEr', 'PhycoCy', 'ACQ.', 'DATE', '&', 'TIME']
+            else:
+                raise ValueError("Unrecognised number of columns in input file")
             df['time'] = list(pd.to_datetime(df["ACQ."] + " " + df["DATE"], format='%d/%m/%Y %H:%M:%S.%f', utc=True).values.astype(float) / 10 ** 9)
             df['depth'] = df['Press']/0.981
             df = df.sort_values(by=['time'])
