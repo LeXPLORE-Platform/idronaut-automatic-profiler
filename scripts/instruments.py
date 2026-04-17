@@ -215,6 +215,8 @@ class IdronautD4(Idronaut):
             df = df.sort_values(by=['time'])
             df["Cond"] = df["Cond"] / 1000
             df["Cond20"] = df["Cond20"] / 1000
+            if df["time"].iloc[0] < pd.Timestamp("2026-01-15 12:00").timestamp():
+                df["OPTO%"] = df["OPTO%"] / 29
             empty = np.empty((len(df)))
             empty[:] = np.nan
             for variable in self.variables:
