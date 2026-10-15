@@ -11,6 +11,12 @@ from datetime import datetime, timedelta, timezone
 from general.functions import GenericInstrument, json_converter
 
 
+def parse_time(values):
+    """Parse Idronaut date strings to UTC epoch seconds, independent of the datetime resolution pandas uses
+    (nanoseconds before pandas 3, microseconds from pandas 3)."""
+    time = pd.to_datetime(values, format='%d/%m/%Y %H:%M:%S.%f', utc=True)
+    return list((time - pd.Timestamp("1970-01-01", tz="UTC")) / pd.Timedelta(seconds=1))
+
 class Idronaut(GenericInstrument):
     def __init__(self, *args, **kwargs):
         super(Idronaut, self).__init__(*args, **kwargs)
@@ -124,9 +130,13 @@ class IdronautD1(Idronaut):
                 self.log.info("File too short, skipping.".format(file), 2)
                 return False
             df.columns = ['Press', 'Temp', 'Cond', 'Sal', 'O2%', 'O2ppm', 'pH', 'eH', 'PAR', 'OPTO%', 'OPTOppm', 'Chl', 'PhycoEr', 'PhycoCy', 'ACQ.', 'DATE', '&', 'TIME']
-            df['time'] = list(pd.to_datetime(df["ACQ."] + " " + df["DATE"], format='%d/%m/%Y %H:%M:%S.%f', utc=True).values.astype(float) / 10 ** 9)
+            df['time'] = parse_time(df["ACQ."] + " " + df["DATE"])
             df['depth'] = df['Press']/0.981
-            df = df.sort_values(by=['time'])
+            df = df.sort_values(by=['time'], kind="stable")
+            duplicates = df["time"].duplicated(keep="first")
+            if duplicates.any():
+                self.log.warning("Dropping {} rows with duplicate timestamps.".format(int(duplicates.sum())), indent=2)
+                df = df[~duplicates]
             empty = np.empty((len(df)))
             empty[:] = np.nan
             for variable in self.variables:
@@ -149,9 +159,13 @@ class IdronautD2(Idronaut):
                 self.log.info("File too short, skipping.".format(file), 2)
                 return False
             df.columns = ['Press', 'Temp', 'Cond', 'Cond20', 'OPTO%', 'OPTOppm', 'pH', 'eH', 'Chl2', 'Chl', 'PhycoEr', 'PhycoCy', 'ACQ.', 'DATE', '&', 'TIME']
-            df['time'] = list(pd.to_datetime(df["ACQ."] + " " + df["DATE"], format='%d/%m/%Y %H:%M:%S.%f', utc=True).values.astype(float) / 10 ** 9)
+            df['time'] = parse_time(df["ACQ."] + " " + df["DATE"])
             df['depth'] = df['Press']/0.981
-            df = df.sort_values(by=['time'])
+            df = df.sort_values(by=['time'], kind="stable")
+            duplicates = df["time"].duplicated(keep="first")
+            if duplicates.any():
+                self.log.warning("Dropping {} rows with duplicate timestamps.".format(int(duplicates.sum())), indent=2)
+                df = df[~duplicates]
             df["Cond"] = df["Cond"] / 1000
             df["Cond20"] = df["Cond20"] / 1000
             if df["time"].iloc[0] > 1750255488:
@@ -178,9 +192,13 @@ class IdronautD3(Idronaut):
                 self.log.info("File too short, skipping.".format(file), 2)
                 return False
             df.columns = ['Press', 'Temp', 'Cond', 'Cond20', 'OPTO%', 'OPTOppm', 'pH', 'eH', 'Chl2', 'Turb', 'Chl', 'PhycoEr', 'PhycoCy', 'ACQ.', 'DATE', '&', 'TIME']
-            df['time'] = list(pd.to_datetime(df["ACQ."] + " " + df["DATE"], format='%d/%m/%Y %H:%M:%S.%f', utc=True).values.astype(float) / 10 ** 9)
+            df['time'] = parse_time(df["ACQ."] + " " + df["DATE"])
             df['depth'] = df['Press']/0.981
-            df = df.sort_values(by=['time'])
+            df = df.sort_values(by=['time'], kind="stable")
+            duplicates = df["time"].duplicated(keep="first")
+            if duplicates.any():
+                self.log.warning("Dropping {} rows with duplicate timestamps.".format(int(duplicates.sum())), indent=2)
+                df = df[~duplicates]
             df["Cond"] = df["Cond"] / 1000
             df["Cond20"] = df["Cond20"] / 1000
             empty = np.empty((len(df)))
@@ -210,9 +228,13 @@ class IdronautD4(Idronaut):
                 df.columns = ['Press', 'Temp', 'Cond', 'Cond20', 'OPTO%', 'OPTOppm', 'pH', 'eH', 'Chl2', 'Turb', 'Chl', 'PhycoEr', 'PhycoCy', 'ACQ.', 'DATE', '&', 'TIME']
             else:
                 raise ValueError("Unrecognised number of columns in input file")
-            df['time'] = list(pd.to_datetime(df["ACQ."] + " " + df["DATE"], format='%d/%m/%Y %H:%M:%S.%f', utc=True).values.astype(float) / 10 ** 9)
+            df['time'] = parse_time(df["ACQ."] + " " + df["DATE"])
             df['depth'] = df['Press']/0.981
-            df = df.sort_values(by=['time'])
+            df = df.sort_values(by=['time'], kind="stable")
+            duplicates = df["time"].duplicated(keep="first")
+            if duplicates.any():
+                self.log.warning("Dropping {} rows with duplicate timestamps.".format(int(duplicates.sum())), indent=2)
+                df = df[~duplicates]
             df["Cond"] = df["Cond"] / 1000
             df["Cond20"] = df["Cond20"] / 1000
             empty = np.empty((len(df)))

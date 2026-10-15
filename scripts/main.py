@@ -56,11 +56,13 @@ def main(server=False, logs=False):
             continue
 
         if sensor.read_data(file):
-            sensor.quality_assurance(file_path="notes/quality_assurance.json", maintenance_file="notes/events.csv")
+            sensor.quality_assurance(file_path=os.path.join(repo, "notes", "quality_assurance.json"))
+            sensor.apply_events(os.path.join(repo, "notes", "events.csv"), profile=True)
             edited_files.extend(sensor.export(directories["Level1"], "L1_LexploreIdronaut_" + deployment))
             sensor.mask_data()
             sensor.profile_to_timeseries_grid(depth_label="depth")
-            sensor.compute_physical_quantities()
+            sensor.mask_grid_events()
+            sensor.compute_physical_quantities(bathymetry_file=os.path.join(repo, "notes", "bathymetry.csv"))
             edited_files.extend(sensor.export(directories["Level2"], "L2_LexploreIdronaut_" + deployment, output_period="monthly",
                           profile_to_grid=True))
     log.end_stage()

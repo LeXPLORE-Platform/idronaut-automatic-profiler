@@ -31,14 +31,14 @@ Lake Geneva [46.50, 6.66]
 ## Sensors
 
 Idronaut is a vertical profiler. Every two hours it collects a vertical profile of CTD (Conductivity, Temperature, and Depth), DO (Dissolved Oxygen), PH, Redox, CHL-a, Phycoerythrin, and Phycocyanin.
-Data ranging from 0m to approx. 60m depth. The profiler is located in the LéXPLORE platform (46°30’0.819″ N, 6°39’39.007″ E) 
+Data ranging from approx. 1 m to 90 m depth. The profiler is located in the LéXPLORE platform (46°30’0.819″ N, 6°39’39.007″ E) 
 
 ### CTD (Conductivity, Temperature, Depth, DO, PH, Redox, CHL-a, Phycoerythrin, Phycocyanin )
 
 - **Brand, Model & SN**: Idronaut, OCEAN SEVEN 316Plus, SN 715681
 - **System integration**: Indronaut winch installed over the internal moonpool of the platform, data download with REBUS software
 - **Accuracy**: Conductivity ± 0.003 ms/cm, Temperature ± 0.003 °C, Depth ± 0,05 % FS, DO ± 1%, PH ± 0.01 pH, Redox 1mV
-- **Setup** depth range: surface to 60 m depth, sampling period: 1 profile every 2 hours, profiling speed: 5 cm/s
+- **Setup** depth range: surface to 90 m depth, sampling period: 1 profile every 2 hours, profiling speed: 5 cm/s
 
 ## Code
 
@@ -64,7 +64,7 @@ To reprocess data you can run the following command:
 
 `python scripts/main.py`
 
-It is recommended to delete the Level1 and Level2 folders in data before running any reprocessing.
+Delete the Level1 and Level2 folders in data before running any reprocessing: existing Level 1 files and Level 2 profiles are skipped, not overwritten, so changes (e.g. to `notes/events.csv`) would not be applied.
 
 ### Live data
 
@@ -111,10 +111,30 @@ The data can be found in the folder `data`. The data is structured as follows:
 Quality checks include but are not limited to range validation, data type checking and flagging missing data.
 The automatic quality check is controlled by the package [Envass](https://pypi.org/project/envass/). The specific methods implemented for this dataset are listed in `notes/quality_assurance.json`. 
 
-###  Events 
+### Events
 
-Maintenance dates, interesting or surprising events, non identified by the quality assurance outliers are listed in the folder `notes/events.csv`.
-Check also the `notes/sensor_history.csv` (if existing)
+Maintenance dates, sensor problems and other events not identified by the automatic quality assurance are listed in `notes/events.csv`.
+One file covers all deployments (D1 to D4). The events are applied to the quality flags (`<variable>_qual = 1`) when the data are
+processed to Level 1, and the flagged data are therefore NaN in Level 2. The file is semicolon separated with the columns `start;stop;parameter;depth;comments`:
+
+- `start`, `stop`: UTC, format `YYYYMMDD HH:MM:SS` (inclusive). An empty `stop` means the event is ongoing.
+  The event applies to every profile whose time range overlaps this window, and always to the whole profile: the exact times within a profile do not matter.
+- `parameter`: `All` or a comma separated list of variable names as they appear in the Level 1 files (e.g. `Temp,OPTO%`).
+  Only variables with a `_qual` variable can be flagged: `Press`, `Temp`, `Cond`, `Cond20`, `Sal`, `O2pc`, `O2ppm`, `OPTO%`, `OPTOppm`,
+  `pH`, `eH`, `PAR`, `Chl`, `Chl2`, `Turb`, `PhycoEr`, `PhycoCy`. `All` flags all of them.
+  Flagging `Temp` also removes it from the Level 2 `thermocline_depth` and `mixed_layer_depth`, which are calculated from the Level 2 temperature.
+  Flagging `Press` does not change Level 2, which is gridded on `depth`.
+- `depth`: empty or `All` flags the whole profile. Otherwise only the points of the profile whose depth (`Press / 0.981`) matches are flagged:
+  a single depth (`5`, matching ±0.1 m, half the 0.2 m spacing of the Level 2 grid), a range (`10-20`) or a comma separated list of both (`2.5,10-20`).
+  Depths are in metres. Depths can be slightly negative at the surface, so negative values are allowed (e.g. `-1.5-30`).
+  The Level 2 grid bins within the flagged depth range are also set to NaN, so they are not interpolated from the data either side.
+- `comments`: free text description of the event. If it contains a `;`, put it in double quotes.
+
+Events added for profiles that were already processed only take effect after deleting the Level1 and Level2 folders and reprocessing the
+complete dataset (see [Reprocess data](#reprocess-data)): existing files and profiles are not overwritten.
+Problems in the events file are logged as warnings and do not stop processing.
+
+Check also the `notes/sensors_history.csv` and the maintenance log `notes/metadata.csv`.
 
 ## Collaborators
 

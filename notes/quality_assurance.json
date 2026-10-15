@@ -13,5 +13,10 @@
   "O2ppm_2": {"simple": {"numeric": "True", "bounds": [0,14]}, "advanced": {}},
   "Chl": {"simple": {"numeric": "True", "bounds": [0,50]}, "advanced": {}},
   "PhycoEr": {"simple": {"numeric": "True", "bounds": [-50,50]}, "advanced": {}},
-  "PhycoCy": {"simple": {"numeric": "True", "bounds": [-50,50]}, "advanced": {}}
+  "PhycoCy": {"simple": {"numeric": "True", "bounds": [-50,50]}, "advanced": {}},
+  "Cond20": {"simple": {"numeric": "True", "bounds": ["-inf","inf"]}, "advanced": {}},
+  "OPTO%": {"simple": {"numeric": "True", "bounds": ["-inf","inf"]}, "advanced": {}},
+  "OPTOppm": {"simple": {"numeric": "True", "bounds": ["-inf","inf"]}, "advanced": {}},
+  "Chl2": {"simple": {"numeric": "True", "bounds": ["-inf","inf"]}, "advanced": {}},
+  "Turb": {"simple": {"numeric": "True", "bounds": ["-inf","inf"]}, "advanced": {}}
 }
